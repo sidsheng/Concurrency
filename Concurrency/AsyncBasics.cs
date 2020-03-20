@@ -154,6 +154,18 @@ namespace Concurrency
             }
 
             #endregion
+        
+            #region 7 Context via ConfigureAwait
+
+            if (testNumber == 7)
+            {
+                await ResumeOnContextAsync();
+                await ResumeWithoutContextAsync();
+            }
+
+            #endregion
+
+
         }
 
         #region 1
@@ -374,5 +386,25 @@ namespace Concurrency
         }
 
         #endregion
+    
+        #region 7
+
+        async Task ResumeOnContextAsync()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // resumes on same context
+        }
+
+        async Task ResumeWithoutContextAsync()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+            // discards context when it resumes
+        }
+
+        #endregion
+    
+        
     }
 }
