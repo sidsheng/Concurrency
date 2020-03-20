@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Concurrency
 {
-    #region 2.2
+    #region 2
 
     interface IMyAsyncInterface
     {
@@ -59,51 +59,71 @@ namespace Concurrency
         {
         }
 
-        public async Task Start()
+        public async Task Start(int testNumber)
         {
-            #region 2.1
+            #region 1
 
-            await DelayResult<int>(182, TimeSpan.FromSeconds(1));
-            string result1 = await DoStuffWithRetries();
-            string result2 = await DoStuffWithTimeout();
+            if (testNumber == 1)
+            {
+                await DelayResult<int>(182, TimeSpan.FromSeconds(1));
+                string result1 = await DoStuffWithRetries();
+                string result2 = await DoStuffWithTimeout();
+            }
 
             #endregion
 
-            #region 2.2
+            #region 2
 
-            MySynchronousImplementation mySyncImp = new MySynchronousImplementation();
-
-            int result3 = await mySyncImp.GetValueAsync();
-            Console.WriteLine($"result = {result3}");
-
-            await mySyncImp.DoSomethingAsync();
-            Console.WriteLine("DoSomethingAsync()");
-
-            try
+            if (testNumber == 1)
             {
-                await mySyncImp.NotImplementedAsync<int>();
+                MySynchronousImplementation mySyncImp = new MySynchronousImplementation();
+
+                int result3 = await mySyncImp.GetValueAsync();
+                Console.WriteLine($"result = {result3}");
+
+                await mySyncImp.DoSomethingAsync();
+                Console.WriteLine("DoSomethingAsync()");
+
+                try
+                {
+                    await mySyncImp.NotImplementedAsync<int>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"NotImplementedAsync {ex}");
+                }
+
+                try
+                {
+                    var ct = new CancellationTokenSource();
+                    ct.Cancel();
+                    int result4 = await mySyncImp.GetValueAsync(ct.Token);
+                    Console.WriteLine($"GetValueAsync{result4}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Cancellation {ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"NotImplementedAsync {ex}");
-            }
 
-            try
+            #endregion
+
+            #region 3
+
+            if (testNumber == 3)
             {
-                var ct = new CancellationTokenSource();
-                ct.Cancel();
-                int result4 = await mySyncImp.GetValueAsync(ct.Token);
-                Console.WriteLine($"GetValueAsync{result4}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Cancellation {ex}");
+                var progress = new Progress<double>();
+                progress.ProgressChanged += (sender, args) =>
+                {
+                    Console.WriteLine($"% done: {args}");
+                };
+                await MyMethodAsync(progress);
             }
 
             #endregion
         }
 
-        #region 2.1
+        #region 1
 
         /// <summary>
         /// Simple Task.Delay()
@@ -169,10 +189,21 @@ namespace Concurrency
 
         #endregion
 
-        #region 2.2
+        #region 3
 
-
+        async Task MyMethodAsync(IProgress<double> progress = null)
+        {
+            double percentComplete = 0;
+            for (int i = 0; i < 10; i++)
+            {
+                await Task.Delay(100);
+                percentComplete += 10;
+                progress?.Report(percentComplete);
+            }
+        }
 
         #endregion
+
+        
     }
 }
