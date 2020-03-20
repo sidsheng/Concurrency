@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -121,6 +124,16 @@ namespace Concurrency
             }
 
             #endregion
+
+            #region 4
+        
+            if (testNumber == 4)
+            {
+                await ObserveOneExceptionAsync();
+                await ObserverAllExceptionsAsync();
+            }
+
+            #endregion
         }
 
         #region 1
@@ -199,6 +212,82 @@ namespace Concurrency
                 await Task.Delay(100);
                 percentComplete += 10;
                 progress?.Report(percentComplete);
+            }
+        }
+
+        #endregion
+
+        #region 4
+
+        async Task WhenAllTest()
+        {
+            Task task1 = Task.Delay(TimeSpan.FromSeconds(1));
+            Task task2 = Task.Delay(TimeSpan.FromSeconds(2));
+            Task task3 = Task.Delay(TimeSpan.FromSeconds(1));
+
+            await Task.WhenAll(task1, task2, task3);
+
+            Task<int> task4 = Task.FromResult(1);
+            Task<int> task5 = Task.FromResult(2);
+            Task<int> task6 = Task.FromResult(3);
+
+            int[] results = await Task.WhenAll(task4, task5, task6);
+        }
+
+        async Task<string> DownloadAllAsync(HttpClient client, IEnumerable<string> urls)
+        {
+            var downloads = urls.Select(urls => client.GetStringAsync(urls));
+            Task<string>[] downloadTasks = downloads.ToArray();
+
+            string[] htmlPages = await Task.WhenAll(downloadTasks);
+
+            return string.Concat(htmlPages);
+        }
+
+        async Task ThrowNotImplementedExceptionAsync()
+        {
+            await Task.Delay(10);
+            throw new NotImplementedException();
+        }
+
+        async Task ThrowInvalidOperationExceptionAsync()
+        {
+            await Task.Delay(10);
+            throw new InvalidOperationException();
+        }
+
+        async Task ObserveOneExceptionAsync()
+        {
+            var task1 = ThrowNotImplementedExceptionAsync();
+            var task2 = ThrowInvalidOperationExceptionAsync();
+
+            try
+            {
+                await Task.WhenAll(task1, task2);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ObserveOneExceptionAsync(): {ex}");
+            }
+        }
+
+        async Task ObserverAllExceptionsAsync()
+        {
+            var task1 = ThrowNotImplementedExceptionAsync();
+            var task2 = ThrowInvalidOperationExceptionAsync();
+
+            Task allTasks = Task.WhenAll(task1, task2);
+            try
+            {
+                await allTasks;
+            }
+            catch
+            {
+                AggregateException allExceptions = allTasks.Exception;
+                foreach (var ex in allExceptions.InnerExceptions)
+                {
+                    Console.WriteLine($"ObserverAllExceptionsAsync(): {ex}");
+                }
             }
         }
 
