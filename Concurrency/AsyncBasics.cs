@@ -64,7 +64,7 @@ namespace Concurrency
 
         public async Task Start(int testNumber)
         {
-            #region 1
+            #region 1 Delay, retries, timeout
 
             if (testNumber == 1)
             {
@@ -75,9 +75,9 @@ namespace Concurrency
 
             #endregion
 
-            #region 2
+            #region 2 Completed tasks
 
-            if (testNumber == 1)
+            if (testNumber == 2)
             {
                 MySynchronousImplementation mySyncImp = new MySynchronousImplementation();
 
@@ -111,7 +111,7 @@ namespace Concurrency
 
             #endregion
 
-            #region 3
+            #region 3 Progress updates
 
             if (testNumber == 3)
             {
@@ -125,12 +125,32 @@ namespace Concurrency
 
             #endregion
 
-            #region 4
+            #region 4 WhenAll
         
             if (testNumber == 4)
             {
                 await ObserveOneExceptionAsync();
                 await ObserverAllExceptionsAsync();
+            }
+
+            #endregion
+        
+            #region 5 WhenAny
+
+            if (testNumber == 5)
+            {
+                int length = await FirstRespondingUrlAsync(new HttpClient(), "https://www.google.com.au", "https://www.google.com.au");
+                Console.WriteLine($"FirstRespondingUrlAsync: {length}");
+            }
+
+            #endregion
+        
+            #region 6 Processing Tasks as they complete
+
+            if (testNumber == 6)
+            {
+                await ProcessTasksAsync1();
+                await ProcessTasksAsync2();
             }
 
             #endregion
@@ -293,6 +313,66 @@ namespace Concurrency
 
         #endregion
 
-        
+        #region 5
+
+        async Task<int> FirstRespondingUrlAsync(HttpClient client, string urlA, string urlB)
+        {
+            Task<byte[]> downloadTaskA = client.GetByteArrayAsync(urlA);
+            Task<byte[]> downloadTaskB = client.GetByteArrayAsync(urlB);
+
+            Task<byte[]> completedTask = await Task.WhenAny(downloadTaskA, downloadTaskB);
+            byte[] data = await completedTask;
+            
+            return data.Length;
+        }
+
+        #endregion
+
+        #region 6
+
+        async Task<int> DelayAndReturnAsync(int value)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(value));
+            return value;
+        }
+
+        async Task AwaitAndProcessAsync(Task<int> task)
+        {
+            int result = await task;
+            Console.WriteLine($"AwaitAndProcessAsync: {result}");
+        }
+
+        async Task ProcessTasksAsync1()
+        {
+            Task<int> taskA = DelayAndReturnAsync(2);
+            Task<int> taskB = DelayAndReturnAsync(3);
+            Task<int> taskC = DelayAndReturnAsync(1);
+            Task<int>[] tasks = new[] { taskA, taskB, taskC };
+
+            IEnumerable<Task> taskQuery =
+                from t in tasks
+                select AwaitAndProcessAsync(t);
+
+            Task[] processingTasks = taskQuery.ToArray();
+            await Task.WhenAll(processingTasks);
+        }
+
+        async Task ProcessTasksAsync2()
+        {
+            Task<int> taskA = DelayAndReturnAsync(2);
+            Task<int> taskB = DelayAndReturnAsync(3);
+            Task<int> taskC = DelayAndReturnAsync(1);
+            Task<int>[] tasks = new[] { taskA, taskB, taskC };
+
+            Task[] processingTasks = tasks.Select(async t =>
+            {
+                int result = await t;
+                Console.WriteLine($"ProcessTasksAsync2: {result}");
+            }).ToArray();
+
+            await Task.WhenAll(processingTasks);
+        }
+
+        #endregion
     }
 }

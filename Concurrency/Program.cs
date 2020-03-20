@@ -7,7 +7,7 @@ namespace Concurrency
         static void Main(string[] args)
         {
             AsyncBasics asyncBasics = new AsyncBasics();
-            asyncBasics.Start(4).Wait();
+            asyncBasics.Start(6).Wait();
         }
     }
 }
