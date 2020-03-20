@@ -165,7 +165,40 @@ namespace Concurrency
 
             #endregion
 
+            #region 8 Catching exceptions
 
+            if (testNumber == 8)
+            {
+                await TestAsync1();
+                await TestAsync2();
+            }
+
+            #endregion
+
+            #region 9 Async void: avoid - skipped
+            #endregion
+
+            #region 10
+
+            if (testNumber == 10)
+            {
+                await MethodAsync1();
+                await MethodAsync2();
+            }
+
+            #endregion
+
+            #region 11
+
+            if (testNumber == 11)
+            {
+                await ConsumingMethodAsync1();
+                await ConsumingMethodAsync2();
+                await ConsumingMethodAsync3();
+                await ConsumingMethodAsync4();
+            }
+
+            #endregion
         }
 
         #region 1
@@ -405,6 +438,99 @@ namespace Concurrency
 
         #endregion
     
+        #region 8
+
+        async Task ThrowExceptionAsync()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            throw new InvalidOperationException("test");
+        }
+
+        async Task TestAsync1()
+        {
+            try
+            {
+                await ThrowExceptionAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                Console.WriteLine("TestAsync1: Exception caught");
+            }
+        }
+
+        async Task TestAsync2()
+        {
+            Task task = ThrowExceptionAsync();
+            try
+            {
+                await task;
+            }
+            catch (InvalidOperationException)
+            {
+                Console.WriteLine("TestAsync2: Exception caught");
+            }
+        }
+
+        #endregion
+
+        #region 10
+
+        async ValueTask<int> MethodAsync1()
+        {
+            await Task.Delay(100);
+            return 182;
+        }
+
+        async Task<int> SlowMethodAsync2()
+        {
+            await Task.Delay(100);
+            return 182;
+        }
         
+        ValueTask<int> MethodAsync2()
+        {
+            bool canBehaveSynchronously = true;
+            if (canBehaveSynchronously)
+            {
+                return new ValueTask<int>(182);
+            }
+
+            return new ValueTask<int>(SlowMethodAsync2());
+        }
+
+        #endregion
+
+        #region 11
+
+        async Task ConsumingMethodAsync1()
+        {
+            int value = await MethodAsync2();
+            Console.WriteLine($"ConsumingMethodAsync1: {value}");
+        }
+
+        async Task ConsumingMethodAsync2()
+        {
+            ValueTask<int> valueTask = MethodAsync2();
+            int value = await valueTask;
+            Console.WriteLine($"ConsumingMethodAsync2: {value}");
+        }
+
+        async Task ConsumingMethodAsync3()
+        {
+            Task<int> task = MethodAsync2().AsTask();
+            int value = await task;
+            int anotherValue = await task;
+            Console.WriteLine($"ConsumingMethodAsync3: {value}, {anotherValue}");
+        }
+
+        async Task ConsumingMethodAsync4()
+        {
+            Task<int> task1 = MethodAsync2().AsTask();
+            Task<int> task2 = MethodAsync2().AsTask();
+            int[] results = await Task.WhenAll(task1, task2);
+            Console.WriteLine($"ConsumingMethodAsync4: {results[0]}, {results[1]}");
+        }
+
+        #endregion
     }
 }
