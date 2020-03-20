@@ -6,8 +6,11 @@ namespace Concurrency
     {
         static void Main(string[] args)
         {
-            AsyncBasics asyncBasics = new AsyncBasics();
-            asyncBasics.Start(11).Wait();
+            //var asyncBasics = new AsyncBasics();
+            //asyncBasics.Start(11).Wait();
+
+            var asyncStreams = new AsyncStreams();
+            asyncStreams.Start(2).Wait();
         }
     }
 }
