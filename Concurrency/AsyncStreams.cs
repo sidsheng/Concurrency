@@ -59,7 +59,7 @@ namespace Concurrency
             #endregion
         }
 
-        #region 1
+        #region 1 Creating Async Streams
         
         async IAsyncEnumerable<int> GetValuesAsync1()
         {
@@ -96,7 +96,7 @@ namespace Concurrency
 
         #endregion
 
-        #region 2
+        #region 2 Consuming Async Streams
 
         async Task ProcessValueAsync()
         {
@@ -109,7 +109,7 @@ namespace Concurrency
         
         #endregion
 
-        #region 3
+        #region 3 LINQ with Async Streams
 
         async IAsyncEnumerable<int> SlowRange()
         {
@@ -167,7 +167,7 @@ namespace Concurrency
 
         #endregion
 
-        #region 4
+        #region 4 Cancellation with Async Streams
 
         async Task AsyncStreamCancel()
         {
