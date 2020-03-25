@@ -10,7 +10,7 @@ namespace Concurrency
             //asyncBasics.Start(11).Wait();
 
             var asyncStreams = new AsyncStreams();
-            asyncStreams.Start(2).Wait();
+            asyncStreams.Start(4).Wait();
         }
     }
 }
